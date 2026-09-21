@@ -21,15 +21,19 @@ const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
 
 const isLocalDevOrigin = (origin) => /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
+// Vercel sets VERCEL=1 automatically. Checking it (instead of NODE_ENV) means a stray
+// NODE_ENV=production in a local .env can't push local testing into "live" mode.
+const isHosted = Boolean(process.env.VERCEL);
+
 app.use(
   cors({
     origin(origin, cb) {
       // No Origin header = curl / server-to-server. Otherwise it must be whitelisted
-      // (any localhost / 127.0.0.1 port is also accepted, but only outside production).
+      // (any localhost / 127.0.0.1 port is also accepted, but only when not running on Vercel).
       const ok =
         !origin ||
         allowedOrigins.includes(origin) ||
-        (process.env.NODE_ENV !== 'production' && isLocalDevOrigin(origin));
+        (!isHosted && isLocalDevOrigin(origin));
       cb(null, ok);
     },
   })

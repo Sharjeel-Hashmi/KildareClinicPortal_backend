@@ -2,8 +2,9 @@ import dns from 'node:dns';
 import mongoose from 'mongoose';
 
 // Some ISPs/routers block MongoDB Atlas SRV DNS lookups (querySrv ECONNREFUSED).
-// In local development use public DNS servers; skipped on Vercel/production.
-if (process.env.NODE_ENV !== 'production') {
+// When running locally use public DNS servers; skipped on Vercel (VERCEL=1 is set
+// automatically there, so a stray NODE_ENV in a local .env can't affect this).
+if (!process.env.VERCEL) {
   dns.setServers(['8.8.8.8', '1.1.1.1']);
 }
 
