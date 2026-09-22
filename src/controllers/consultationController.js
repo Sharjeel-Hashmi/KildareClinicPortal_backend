@@ -10,6 +10,8 @@ const clean = (data) => {
   return data;
 };
 
+// A patient's own record always shows every doctor's consultations (continuity of care) —
+// this one is never filtered by who is signed in.
 export const listForPatient = asyncHandler(async (req, res) => {
   const patient = await Patient.findById(req.params.patientId).select('_id');
   if (!patient) throw new HttpError(404, 'Patient not found');
@@ -53,6 +55,15 @@ export const listAll = asyncHandler(async (req, res) => {
         { clinician: rx },
       ],
     };
+  }
+
+  // This list/dashboard view (as opposed to a single patient's record, which always shows
+  // full history) is scoped per doctor: a doctor only sees consultations they created.
+  // Admins are never scoped by default, but may look at one doctor's activity via ?doctorId=.
+  if (req.user.role === 'doctor') {
+    filter = { ...filter, createdBy: req.user._id };
+  } else if (req.query.doctorId) {
+    filter = { ...filter, createdBy: req.query.doctorId };
   }
 
   const [total, consultations] = await Promise.all([

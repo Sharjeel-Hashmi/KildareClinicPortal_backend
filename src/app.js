@@ -6,6 +6,9 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import patientRoutes from './routes/patientRoutes.js';
 import consultationRoutes from './routes/consultationRoutes.js';
+import prescriptionRoutes from './routes/prescriptionRoutes.js';
+import certificateRoutes from './routes/certificateRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
@@ -57,6 +60,9 @@ app.use('/api', async (_req, _res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/consultations', consultationRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/certificates', certificateRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/stats', statsRoutes);
 
 app.use(notFound);

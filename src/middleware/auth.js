@@ -20,3 +20,9 @@ export const protect = asyncHandler(async (req, _res, next) => {
   req.user = user;
   next();
 });
+
+// Doctor-account management is Super Admin only
+export const requireAdmin = (req, _res, next) => {
+  if (req.user.role !== 'admin') throw new HttpError(403, 'Only an administrator can do this');
+  next();
+};
