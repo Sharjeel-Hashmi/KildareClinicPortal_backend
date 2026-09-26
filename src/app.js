@@ -10,6 +10,10 @@ import prescriptionRoutes from './routes/prescriptionRoutes.js';
 import certificateRoutes from './routes/certificateRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
+import medicineRoutes from './routes/medicineRoutes.js';
+import labRoutes from './routes/labRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -64,6 +68,10 @@ app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/medicines', medicineRoutes);
+app.use('/api/labs', labRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

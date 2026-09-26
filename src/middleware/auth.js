@@ -26,3 +26,10 @@ export const requireAdmin = (req, _res, next) => {
   if (req.user.role !== 'admin') throw new HttpError(403, 'Only an administrator can do this');
   next();
 };
+
+// Settings (medicines & labs) — Super Admin always, plus any doctor the admin has granted access to
+export const requireSettingsAccess = (req, _res, next) => {
+  const allowed = req.user.role === 'admin' || req.user.canManageSettings === true;
+  if (!allowed) throw new HttpError(403, 'Only an administrator can do this');
+  next();
+};

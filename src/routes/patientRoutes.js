@@ -16,6 +16,10 @@ import {
   listForPatient as listCertificatesForPatient,
   createForPatient as createCertificateForPatient,
 } from '../controllers/certificateController.js';
+import {
+  listForPatient as listReportsForPatient,
+  createForPatient as createReportForPatient,
+} from '../controllers/reportController.js';
 
 const router = Router();
 router.use(protect);
@@ -25,5 +29,6 @@ router.route('/:id').get(getPatient).put(updatePatient).delete(deletePatient);
 router.route('/:patientId/consultations').get(listForPatient).post(createForPatient);
 router.route('/:patientId/prescriptions').get(listPrescriptionsForPatient).post(createPrescriptionForPatient);
 router.route('/:patientId/certificates').get(listCertificatesForPatient).post(createCertificateForPatient);
+router.route('/:patientId/reports').get(listReportsForPatient).post(createReportForPatient);
 
 export default router;

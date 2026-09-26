@@ -25,6 +25,7 @@ export const createForPatient = asyncHandler(async (req, res) => {
     patient: patient._id,
     doctorName: req.user.name,
     doctorImc: req.user.imcNumber,
+    doctorSignatureUrl: req.user.signatureUrl || '',
     createdBy: req.user._id,
   });
   await prescription.save();

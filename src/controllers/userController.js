@@ -2,7 +2,7 @@ import User from '../models/User.js';
 import Consultation from '../models/Consultation.js';
 import { asyncHandler, pick, HttpError } from '../utils/asyncHandler.js';
 
-const USER_FIELDS = ['name', 'email', 'phone', 'imcNumber', 'role'];
+const USER_FIELDS = ['name', 'email', 'phone', 'imcNumber', 'role', 'canManageSettings'];
 
 const normaliseRole = (role) => (role === 'admin' ? 'admin' : 'doctor');
 

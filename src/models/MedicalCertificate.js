@@ -27,6 +27,8 @@ const certificateSchema = new Schema(
     // Snapshot of the issuing doctor at the time of writing (see Prescription.js)
     doctorName: { type: String, required: true, trim: true, maxlength: 150 },
     doctorImc: { type: String, required: true, trim: true, maxlength: 30 },
+    // Snapshot of the doctor's signature image at the time of writing (see Prescription.js)
+    doctorSignatureUrl: { type: String, trim: true, default: '' },
 
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },

@@ -17,6 +17,13 @@ const userSchema = new mongoose.Schema(
     // Irish Medical Council registration number. Required for doctor accounts
     // (enforced in userController, not here, so an admin account can leave it blank).
     imcNumber: { type: String, trim: true, uppercase: true, maxlength: 30 },
+    // Vercel Blob URL of the doctor's uploaded signature image, used on printed
+    // prescriptions & medical certificates. Optional — falls back to typed name.
+    signatureUrl: { type: String, trim: true, default: '' },
+    // Lets a Super Admin grant an individual doctor account access to Settings
+    // (manage medicines & labs) without making them a full administrator.
+    // Ignored for role 'admin', who always has Settings access.
+    canManageSettings: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
@@ -42,6 +49,8 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
     role: this.role,
     phone: this.phone || '',
     imcNumber: this.imcNumber || '',
+    signatureUrl: this.signatureUrl || '',
+    canManageSettings: this.role === 'admin' ? true : Boolean(this.canManageSettings),
   };
 };
 

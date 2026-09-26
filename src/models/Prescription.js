@@ -23,6 +23,9 @@ const prescriptionSchema = new Schema(
     // profile changes later, so a printed/saved prescription never silently changes.
     doctorName: { type: String, required: true, trim: true, maxlength: 150 },
     doctorImc: { type: String, required: true, trim: true, maxlength: 30 },
+    // Snapshot of the doctor's signature image at the time of writing (see doctorName above).
+    // Empty when the doctor had not uploaded a signature yet — the printed sheet falls back to their typed name.
+    doctorSignatureUrl: { type: String, trim: true, default: '' },
 
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },

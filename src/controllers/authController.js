@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { asyncHandler, pick, HttpError } from '../utils/asyncHandler.js';
 
-const ME_FIELDS = ['name', 'email', 'phone', 'imcNumber'];
+const ME_FIELDS = ['name', 'email', 'phone', 'imcNumber', 'signatureUrl'];
 
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
