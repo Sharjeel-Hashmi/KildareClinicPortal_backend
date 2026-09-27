@@ -20,6 +20,10 @@ import {
   listForPatient as listReportsForPatient,
   createForPatient as createReportForPatient,
 } from '../controllers/reportController.js';
+import {
+  listForPatient as listInvoicesForPatient,
+  createForPatient as createInvoiceForPatient,
+} from '../controllers/invoiceController.js';
 
 const router = Router();
 router.use(protect);
@@ -30,5 +34,6 @@ router.route('/:patientId/consultations').get(listForPatient).post(createForPati
 router.route('/:patientId/prescriptions').get(listPrescriptionsForPatient).post(createPrescriptionForPatient);
 router.route('/:patientId/certificates').get(listCertificatesForPatient).post(createCertificateForPatient);
 router.route('/:patientId/reports').get(listReportsForPatient).post(createReportForPatient);
+router.route('/:patientId/invoices').get(listInvoicesForPatient).post(createInvoiceForPatient);
 
 export default router;

@@ -13,6 +13,8 @@ import statsRoutes from './routes/statsRoutes.js';
 import medicineRoutes from './routes/medicineRoutes.js';
 import labRoutes from './routes/labRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import invoiceRoutes from './routes/invoiceRoutes.js';
+import serviceRoutes from './routes/serviceRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
@@ -71,6 +73,8 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/medicines', medicineRoutes);
 app.use('/api/labs', labRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/services', serviceRoutes);
 app.use('/api/uploads', uploadRoutes);
 
 app.use(notFound);
