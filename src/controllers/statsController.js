@@ -43,7 +43,7 @@ export const getStats = asyncHandler(async (req, res) => {
   // Admin-only: how many patients each doctor has seen this month, for the "Team activity"
   // panel on the dashboard. Doctors already see their own total via "Consultations this month".
   let teamActivity;
-  if (req.user.role === 'admin') {
+  if (req.user.role !== 'doctor') {
     const [monthConsultations, doctors] = await Promise.all([
       Consultation.find({ consultationDate: { $gte: monthStart } }).select('createdBy').lean(),
       User.find({ role: 'doctor' }).select('name imcNumber').lean(),

@@ -105,7 +105,7 @@ export const getInvoice = asyncHandler(async (req, res) => {
   res.json({ invoice });
 });
 
-// Admin/Super Admin only (see invoiceRoutes.js) — the doctor who created an invoice cannot edit it
+// Super Admin only (see invoiceRoutes.js) — neither Admin nor the doctor who created it can edit
 export const updateInvoice = asyncHandler(async (req, res) => {
   const invoice = await Invoice.findById(req.params.id);
   if (!invoice) throw new HttpError(404, 'Invoice not found');
@@ -127,7 +127,7 @@ export const updateInvoice = asyncHandler(async (req, res) => {
   res.json({ invoice });
 });
 
-// Admin/Super Admin only (see invoiceRoutes.js)
+// Super Admin only (see invoiceRoutes.js)
 export const deleteInvoice = asyncHandler(async (req, res) => {
   const invoice = await Invoice.findById(req.params.id);
   if (!invoice) throw new HttpError(404, 'Invoice not found');

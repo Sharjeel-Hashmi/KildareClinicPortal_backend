@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { protect } from '../middleware/auth.js';
+import { protect, requireSuperAdmin } from '../middleware/auth.js';
 import { getCertificate, deleteCertificate } from '../controllers/certificateController.js';
 
 const router = Router();
 router.use(protect);
 
-router.route('/:id').get(getCertificate).delete(deleteCertificate);
+router.route('/:id').get(getCertificate).delete(requireSuperAdmin, deleteCertificate);
 
 export default router;

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { protect } from '../middleware/auth.js';
+import { protect, requireSuperAdmin } from '../middleware/auth.js';
 import {
   listAll,
   getConsultation,
@@ -11,6 +11,6 @@ const router = Router();
 router.use(protect);
 
 router.get('/', listAll);
-router.route('/:id').get(getConsultation).put(updateConsultation).delete(deleteConsultation);
+router.route('/:id').get(getConsultation).put(updateConsultation).delete(requireSuperAdmin, deleteConsultation);
 
 export default router;

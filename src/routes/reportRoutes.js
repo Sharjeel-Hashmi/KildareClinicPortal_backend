@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { protect } from '../middleware/auth.js';
+import { protect, requireSuperAdmin } from '../middleware/auth.js';
 import { getReport, deleteReport } from '../controllers/reportController.js';
 
 const router = Router();
 router.use(protect);
 
-router.route('/:id').get(getReport).delete(deleteReport);
+router.route('/:id').get(getReport).delete(requireSuperAdmin, deleteReport);
 
 export default router;

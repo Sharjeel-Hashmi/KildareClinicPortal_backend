@@ -1,5 +1,7 @@
 // Usage:
-//   npm run seed        → creates / updates the single admin account only
+//   npm run seed        → creates / promotes the single SUPER ADMIN account only
+//                         (SUPERADMIN_EMAIL / SUPERADMIN_PASSWORD, falling back to the old
+//                          ADMIN_EMAIL / ADMIN_PASSWORD so an existing admin is promoted in place)
 //   npm run seed:demo   → also inserts a few FICTIONAL patients so you can preview the UI
 //                         (never run the demo seed against the live clinic database)
 import 'dotenv/config';
@@ -20,21 +22,39 @@ const daysAgo = (n, hour = 10, minute = 0) => {
 };
 
 async function seedAdmin() {
-  const { ADMIN_NAME = 'Dr. Admin', ADMIN_EMAIL, ADMIN_PASSWORD } = process.env;
-  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-    throw new Error('Set ADMIN_EMAIL and ADMIN_PASSWORD in .env before seeding');
+  const name = process.env.SUPERADMIN_NAME || process.env.ADMIN_NAME || 'Dr. Admin';
+  const email = process.env.SUPERADMIN_EMAIL || process.env.ADMIN_EMAIL;
+  const password = process.env.SUPERADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
+  if (!email || !password) {
+    throw new Error('Set SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD (or ADMIN_EMAIL / ADMIN_PASSWORD) in .env before seeding');
   }
-  if (ADMIN_PASSWORD.length < 8) throw new Error('ADMIN_PASSWORD must be at least 8 characters');
+  if (password.length < 8) throw new Error('The Super Admin password must be at least 8 characters');
 
-  let user = await User.findOne({ email: ADMIN_EMAIL.toLowerCase() });
+  // One-time cleanup: older accounts saved a blank IMC number as '' which clashes on the unique index
+  const cleaned = await User.collection.updateMany({ imcNumber: '' }, { $unset: { imcNumber: 1 } });
+  if (cleaned.modifiedCount) console.log(`Cleared blank IMC number on ${cleaned.modifiedCount} account(s)`);
+
+  let user = await User.findOne({ email: email.toLowerCase() });
   if (user) {
-    user.name = ADMIN_NAME;
-    user.password = ADMIN_PASSWORD; // re-hashed by the pre-save hook
+    const wasRole = user.role;
+    user.name = name;
+    user.password = password; // re-hashed by the pre-save hook
+    user.role = 'super_admin';
+    user.isActive = true;
     await user.save();
-    console.log(`Updated admin account: ${user.email}`);
+    console.log(`Updated Super Admin account: ${user.email}${wasRole !== 'super_admin' ? ` (promoted from ${wasRole})` : ''}`);
   } else {
-    user = await User.create({ name: ADMIN_NAME, email: ADMIN_EMAIL, password: ADMIN_PASSWORD, role: 'admin' });
-    console.log(`Created admin account: ${user.email}`);
+    user = await User.create({ name, email, password, role: 'super_admin' });
+    console.log(`Created Super Admin account: ${user.email}`);
+  }
+
+  // There must only ever be ONE Super Admin. Any other super_admin left over from an earlier
+  // seed run (e.g. a different SUPERADMIN_EMAIL / ADMIN_EMAIL) is demoted to a normal Admin.
+  const demoted = await User.find({ role: 'super_admin', _id: { $ne: user._id } });
+  for (const other of demoted) {
+    other.role = 'admin';
+    await other.save();
+    console.log(`Demoted extra Super Admin to Admin: ${other.email}`);
   }
   return user;
 }

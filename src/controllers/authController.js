@@ -18,6 +18,9 @@ export const login = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email }).select('+password');
   const ok = user ? await user.comparePassword(password) : false;
   if (!ok) throw new HttpError(401, 'Incorrect email or password');
+  if (user.isActive === false) {
+    throw new HttpError(403, 'This account has been deactivated. Please contact an administrator');
+  }
 
   res.json({ token: signToken(user._id), user: user.toSafeJSON() });
 });

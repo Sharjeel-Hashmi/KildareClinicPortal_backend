@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { protect } from '../middleware/auth.js';
+import { protect, requireSuperAdmin } from '../middleware/auth.js';
 import {
   listPatients,
   createPatient,
@@ -29,7 +29,7 @@ const router = Router();
 router.use(protect);
 
 router.route('/').get(listPatients).post(createPatient);
-router.route('/:id').get(getPatient).put(updatePatient).delete(deletePatient);
+router.route('/:id').get(getPatient).put(updatePatient).delete(requireSuperAdmin, deletePatient);
 router.route('/:patientId/consultations').get(listForPatient).post(createForPatient);
 router.route('/:patientId/prescriptions').get(listPrescriptionsForPatient).post(createPrescriptionForPatient);
 router.route('/:patientId/certificates').get(listCertificatesForPatient).post(createCertificateForPatient);
