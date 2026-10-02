@@ -10,12 +10,14 @@ const medicineSchema = new Schema(
       type: [{ type: String, trim: true, maxlength: 40 }],
       default: [],
     },
+    // null / missing = the built-in "Uncategorised" category (so existing medicines need no migration)
+    category: { type: Schema.Types.ObjectId, ref: 'MedicineCategory', default: null },
   },
   { timestamps: true }
 );
 
 medicineSchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
-export const MEDICINE_FIELDS = ['name', 'dosages'];
+export const MEDICINE_FIELDS = ['name', 'dosages', 'category'];
 
 export default mongoose.models.Medicine || mongoose.model('Medicine', medicineSchema);
