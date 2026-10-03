@@ -10,6 +10,28 @@ const clean = (data) => {
   return data;
 };
 
+// A referral letter is signed by whoever saves it: stamp their name / IMC / signature on it
+// (kept as-is on later edits unless the letter is cleared or never had a doctor).
+const stampReferral = (consultation, user) => {
+  const type = (consultation.referral || [])[0];
+  const hasLetter = type && type !== 'none' && String(consultation.referralDetails || '').trim();
+  if (!hasLetter) {
+    consultation.referralDetails = '';
+    consultation.referralDoctor = undefined;
+    return;
+  }
+  if (!user.imcNumber && !consultation.referralDoctor?.imc) {
+    throw new HttpError(400, 'Add your IMC number to your profile before writing a referral letter');
+  }
+  if (!consultation.referralDoctor?.name) {
+    consultation.referralDoctor = {
+      name: user.name,
+      imc: user.imcNumber,
+      signatureUrl: user.signatureUrl || '',
+    };
+  }
+};
+
 // A patient's own record always shows every doctor's consultations (continuity of care) —
 // this one is never filtered by who is signed in.
 export const listForPatient = asyncHandler(async (req, res) => {
@@ -32,6 +54,7 @@ export const createForPatient = asyncHandler(async (req, res) => {
     createdBy: req.user._id,
     updatedBy: req.user._id,
   });
+  stampReferral(consultation, req.user);
   await consultation.save();
   res.status(201).json({ consultation });
 });
@@ -91,6 +114,7 @@ export const updateConsultation = asyncHandler(async (req, res) => {
 
   consultation.set(clean(pick(req.body, CONSULTATION_FIELDS)));
   consultation.updatedBy = req.user._id;
+  stampReferral(consultation, req.user);
   await consultation.save();
   res.json({ consultation });
 });

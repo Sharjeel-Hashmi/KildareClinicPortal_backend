@@ -55,6 +55,14 @@ const consultationSchema = new Schema(
     investigationsOther: { type: String, trim: true, maxlength: 200 },
     referral: [{ type: String, enum: REFERRALS }],
     referralOther: { type: String, trim: true, maxlength: 200 },
+    // Referral letter (only used when the referral is not "none"). Doctor identity is a server-set
+    // snapshot, like Prescription.js, so a saved letter never silently changes.
+    referralDetails: { type: String, trim: true, maxlength: 6000 },
+    referralDoctor: {
+      name: { type: String, trim: true, maxlength: 150 },
+      imc: { type: String, trim: true, maxlength: 30 },
+      signatureUrl: { type: String, trim: true, default: '' },
+    },
     followUp: { type: String, trim: true, maxlength: 1000 },
 
     // Section 6 – Prescription
@@ -84,7 +92,7 @@ export const CONSULTATION_FIELDS = [
   'allergyStatus', 'allergyDetails', 'familySocialHistory',
   'vitals', 'examinationFindings',
   'diagnosis', 'managementPlan', 'investigations', 'investigationsOther',
-  'referral', 'referralOther', 'followUp',
+  'referral', 'referralOther', 'referralDetails', 'followUp',
   'prescription', 'notes', 'clinicianSignature', 'signatureDate',
 ];
 

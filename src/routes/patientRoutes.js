@@ -21,6 +21,10 @@ import {
   createForPatient as createReportForPatient,
 } from '../controllers/reportController.js';
 import {
+  listForPatient as listReferralsForPatient,
+  createForPatient as createReferralForPatient,
+} from '../controllers/referralController.js';
+import {
   listForPatient as listInvoicesForPatient,
   createForPatient as createInvoiceForPatient,
 } from '../controllers/invoiceController.js';
@@ -34,6 +38,7 @@ router.route('/:patientId/consultations').get(listForPatient).post(createForPati
 router.route('/:patientId/prescriptions').get(listPrescriptionsForPatient).post(createPrescriptionForPatient);
 router.route('/:patientId/certificates').get(listCertificatesForPatient).post(createCertificateForPatient);
 router.route('/:patientId/reports').get(listReportsForPatient).post(createReportForPatient);
+router.route('/:patientId/referrals').get(listReferralsForPatient).post(createReferralForPatient);
 router.route('/:patientId/invoices').get(listInvoicesForPatient).post(createInvoiceForPatient);
 
 export default router;

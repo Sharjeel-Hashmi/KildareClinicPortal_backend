@@ -1,5 +1,10 @@
 import Patient, { PATIENT_FIELDS } from '../models/Patient.js';
 import Consultation from '../models/Consultation.js';
+import Prescription from '../models/Prescription.js';
+import MedicalCertificate from '../models/MedicalCertificate.js';
+import Report from '../models/Report.js';
+import Invoice from '../models/Invoice.js';
+import Referral from '../models/Referral.js';
 import { asyncHandler, pick, escapeRegex, HttpError } from '../utils/asyncHandler.js';
 import { generatePatientNo } from '../utils/generatePatientNo.js';
 
@@ -112,11 +117,32 @@ export const updatePatient = asyncHandler(async (req, res) => {
   res.json({ patient });
 });
 
+// Super Admin only (see patientRoutes.js). Removes the patient AND everything filed under them,
+// so no orphaned invoices / prescriptions (which show as blank pages) are left behind.
 export const deletePatient = asyncHandler(async (req, res) => {
   const patient = await Patient.findById(req.params.id);
   if (!patient) throw new HttpError(404, 'Patient not found');
 
-  await Consultation.deleteMany({ patient: patient._id });
+  const filter = { patient: patient._id };
+  const [consultations, prescriptions, certificates, reports, referrals, invoices] = await Promise.all([
+    Consultation.deleteMany(filter),
+    Prescription.deleteMany(filter),
+    MedicalCertificate.deleteMany(filter),
+    Report.deleteMany(filter),
+    Referral.deleteMany(filter),
+    Invoice.deleteMany(filter),
+  ]);
   await patient.deleteOne();
-  res.json({ message: 'Patient and their consultations were deleted' });
+
+  res.json({
+    message: 'Patient and all their records were deleted',
+    deleted: {
+      consultations: consultations.deletedCount,
+      prescriptions: prescriptions.deletedCount,
+      certificates: certificates.deletedCount,
+      reports: reports.deletedCount,
+      referrals: referrals.deletedCount,
+      invoices: invoices.deletedCount,
+    },
+  });
 });

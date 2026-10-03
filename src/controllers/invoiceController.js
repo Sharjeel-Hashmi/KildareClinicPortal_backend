@@ -86,6 +86,10 @@ export const listAll = asyncHandler(async (req, res) => {
     filter = { ...filter, createdBy: req.query.doctorId };
   }
 
+  // Never list an invoice whose patient no longer exists (it would show as a blank row / blank page)
+  const existingPatients = await Patient.distinct('_id');
+  filter = { $and: [filter, { patient: { $in: existingPatients } }] };
+
   const [total, invoices] = await Promise.all([
     Invoice.countDocuments(filter),
     Invoice.find(filter)

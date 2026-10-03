@@ -15,6 +15,7 @@ import medicineCategoryRoutes from './routes/medicineCategoryRoutes.js';
 import labRoutes from './routes/labRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
+import referralRoutes from './routes/referralRoutes.js';
 import serviceRoutes from './routes/serviceRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
@@ -76,6 +77,7 @@ app.use('/api/medicine-categories', medicineCategoryRoutes);
 app.use('/api/labs', labRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/referrals', referralRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/uploads', uploadRoutes);
 
