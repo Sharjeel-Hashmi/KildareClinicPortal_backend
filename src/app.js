@@ -18,12 +18,24 @@ import invoiceRoutes from './routes/invoiceRoutes.js';
 import referralRoutes from './routes/referralRoutes.js';
 import serviceRoutes from './routes/serviceRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import appointmentRoutes from './routes/appointmentRoutes.js';
+import availabilityRoutes from './routes/availabilityRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import auditRoutes from './routes/auditRoutes.js';
+import doctorRoutes from './routes/doctorRoutes.js';
+import clinicSettingsRoutes from './routes/clinicSettingsRoutes.js';
+import publicRoutes from './routes/publicRoutes.js';
+import auditMiddleware from './middleware/audit.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
 app.set('trust proxy', 1); // Vercel sits behind a proxy (needed for rate-limit IPs)
 app.use(helmet());
+
+// Public website API (online booking). Registered BEFORE the dashboard CORS on purpose: it has its own
+// CORS (PUBLIC_SITE_ORIGINS), validation and rate limits, and never needs a login.
+app.use('/api/public', publicRoutes);
 
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
@@ -65,6 +77,9 @@ app.use('/api', async (_req, _res, next) => {
   }
 });
 
+// Audit trail: records who viewed / changed which record (see middleware/audit.js)
+app.use('/api', auditMiddleware);
+
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/consultations', consultationRoutes);
@@ -80,6 +95,12 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/referrals', referralRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/availability', availabilityRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/audit', auditRoutes);
+app.use('/api/doctors', doctorRoutes);
+app.use('/api/clinic-settings', clinicSettingsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

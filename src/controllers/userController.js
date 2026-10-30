@@ -1,14 +1,46 @@
 import User from '../models/User.js';
 import Consultation from '../models/Consultation.js';
 import { asyncHandler, pick, HttpError } from '../utils/asyncHandler.js';
+import { uniqueSlug, SLUG_RE } from '../utils/slug.js';
 
-const USER_FIELDS = ['name', 'email', 'phone', 'imcNumber', 'role', 'canManageSettings'];
+const BOOKING_FIELDS = ['slug', 'photoUrl', 'qualifications', 'specialties', 'bio', 'acceptsOnlineBookings'];
+const USER_FIELDS = ['name', 'email', 'phone', 'imcNumber', 'role', 'canManageSettings', ...BOOKING_FIELDS];
 const UPDATE_FIELDS = [...USER_FIELDS, 'isActive'];
 
 // A Super Admin account can never be created through the API (it is made by `npm run seed`)
 const normaliseRole = (role) => (role === 'admin' ? 'admin' : 'doctor');
 
 const isSuper = (user) => user.role === 'super_admin';
+
+// Online-booking profile: tidy the values and make sure the web address (slug) is valid and unique
+async function cleanBookingFields(body, user) {
+  if (body.specialties !== undefined) {
+    const list = Array.isArray(body.specialties) ? body.specialties : String(body.specialties).split(',');
+    body.specialties = list.map((s) => String(s).trim()).filter(Boolean).slice(0, 12);
+  }
+  if (body.acceptsOnlineBookings !== undefined) body.acceptsOnlineBookings = body.acceptsOnlineBookings === true;
+  if (body.slug !== undefined) {
+    body.slug = String(body.slug || '').trim().toLowerCase();
+    if (body.slug && !SLUG_RE.test(body.slug)) {
+      throw new HttpError(400, 'The web address can only use lowercase letters, numbers and hyphens');
+    }
+  }
+  const accepts = body.acceptsOnlineBookings ?? user?.acceptsOnlineBookings;
+  const nextSlug = body.slug !== undefined ? body.slug : user?.slug;
+  if (accepts && !nextSlug) {
+    body.slug = await uniqueSlug(User, body.name || user?.name, user?._id);
+  } else if (body.slug) {
+    const clash = await User.exists({ slug: body.slug, _id: { $ne: user?._id } });
+    if (clash) throw new HttpError(409, 'Another doctor already uses this web address');
+  }
+  return body;
+}
+
+// Active doctors — everyone signed in can read this (the booking form needs it)
+export const listDoctors = asyncHandler(async (_req, res) => {
+  const doctors = await User.find({ role: 'doctor', isActive: { $ne: false } }).sort({ name: 1 }).select('name imcNumber');
+  res.json({ doctors: doctors.map((d) => ({ id: d._id, name: d.name, imcNumber: d.imcNumber || '' })) });
+});
 
 export const listUsers = asyncHandler(async (req, res) => {
   const [users, consultations] = await Promise.all([
@@ -48,6 +80,7 @@ export const createUser = asyncHandler(async (req, res) => {
   if (!email) throw new HttpError(400, 'Enter an email address');
   if (await User.findOne({ email })) throw new HttpError(409, 'An account with this email already exists');
 
+  await cleanBookingFields(body, null);
   const user = await User.create({ ...body, email, role, password });
   res.status(201).json({ user: user.toSafeJSON() });
 });
@@ -90,6 +123,7 @@ export const updateUser = asyncHandler(async (req, res) => {
     body.email = email;
   }
 
+  await cleanBookingFields(body, user);
   user.set(body);
 
   if (req.body.password) {

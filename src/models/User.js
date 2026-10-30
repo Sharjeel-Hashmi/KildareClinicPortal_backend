@@ -36,12 +36,28 @@ const userSchema = new mongoose.Schema(
     canManageSettings: { type: Boolean, default: false },
     // Deactivated accounts cannot sign in (Admin / Super Admin toggle). Missing = active.
     isActive: { type: Boolean, default: true },
+
+    // ---- Online booking profile (shown on the clinic website for doctors who accept online bookings).
+    // A blank slug is stored as "no value" so the sparse unique index never clashes on empty strings.
+    slug: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      maxlength: 80,
+      set: (v) => (v && String(v).trim() ? v : undefined),
+    },
+    photoUrl: { type: String, trim: true, maxlength: 500, default: '' },
+    qualifications: { type: String, trim: true, maxlength: 300, default: '' },
+    specialties: { type: [String], default: [] },
+    bio: { type: String, trim: true, maxlength: 2000, default: '' },
+    acceptsOnlineBookings: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
 // Sparse: only enforced when an IMC number is actually set, so multiple blank admins are fine.
 userSchema.index({ imcNumber: 1 }, { unique: true, sparse: true });
+userSchema.index({ slug: 1 }, { unique: true, sparse: true });
 
 userSchema.pre('save', async function hashPassword(next) {
   if (!this.isModified('password')) return next();
@@ -64,6 +80,12 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
     signatureUrl: this.signatureUrl || '',
     canManageSettings: this.role !== 'doctor' ? true : Boolean(this.canManageSettings),
     isActive: this.isActive !== false,
+    slug: this.slug || '',
+    photoUrl: this.photoUrl || '',
+    qualifications: this.qualifications || '',
+    specialties: this.specialties || [],
+    bio: this.bio || '',
+    acceptsOnlineBookings: this.acceptsOnlineBookings === true,
   };
 };
 

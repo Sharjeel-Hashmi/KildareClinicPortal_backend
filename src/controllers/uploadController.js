@@ -3,6 +3,8 @@ import { asyncHandler, HttpError } from '../utils/asyncHandler.js';
 
 const KINDS = {
   signature: { allowedContentTypes: ['image/png', 'image/jpeg', 'image/webp'], maxSize: 3 * 1024 * 1024 },
+  // the clinic-wide stamp printed on documents (Super Admin only, see below)
+  stamp: { allowedContentTypes: ['image/png', 'image/jpeg', 'image/webp'], maxSize: 3 * 1024 * 1024 },
   report: {
     allowedContentTypes: ['image/png', 'image/jpeg', 'image/webp', 'application/pdf'],
     maxSize: 15 * 1024 * 1024,
@@ -24,6 +26,9 @@ export const requestUploadToken = asyncHandler(async (req, res) => {
       }
       const config = KINDS[parsed.kind];
       if (!config) throw new HttpError(400, 'Unsupported upload type');
+      if (parsed.kind === 'stamp' && req.user.role !== 'super_admin') {
+        throw new HttpError(403, 'Only a Super Admin can change the clinic stamp');
+      }
 
       return {
         allowedContentTypes: config.allowedContentTypes,

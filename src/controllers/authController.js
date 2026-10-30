@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { asyncHandler, pick, HttpError } from '../utils/asyncHandler.js';
+import { recordAuth } from '../services/auditService.js';
 
 const ME_FIELDS = ['name', 'email', 'phone', 'imcNumber', 'signatureUrl'];
 
@@ -17,12 +18,26 @@ export const login = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ email }).select('+password');
   const ok = user ? await user.comparePassword(password) : false;
-  if (!ok) throw new HttpError(401, 'Incorrect email or password');
+  if (!ok) {
+    // never store what was typed; only that a sign-in failed (and for which account, if it exists)
+    await recordAuth(req, { action: 'login_failed', user, note: user ? undefined : 'Unknown email address' });
+    throw new HttpError(401, 'Incorrect email or password');
+  }
   if (user.isActive === false) {
+    await recordAuth(req, { action: 'login_failed', user, note: 'Deactivated account' });
     throw new HttpError(403, 'This account has been deactivated. Please contact an administrator');
   }
 
+  await recordAuth(req, { action: 'login', user });
   res.json({ token: signToken(user._id), user: user.toSafeJSON() });
+});
+
+// The browser forgets the token itself; this only leaves a record that the person signed out.
+export const logout = asyncHandler(async (req, res) => {
+  // body.reason === 'inactivity' when the portal signed the person out after 15 minutes without activity
+  const auto = req.body?.reason === 'inactivity';
+  await recordAuth(req, { action: 'logout', user: req.user, note: auto ? 'Auto sign-out (inactivity)' : undefined });
+  res.json({ ok: true });
 });
 
 export const me = asyncHandler(async (req, res) => {
