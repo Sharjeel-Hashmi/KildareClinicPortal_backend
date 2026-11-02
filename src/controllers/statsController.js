@@ -16,20 +16,28 @@ export const getStats = asyncHandler(async (req, res) => {
   const monthStart = parseDate(req.query.monthStart, new Date(now.getFullYear(), now.getMonth(), 1));
   const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
-  // Patients are shared across every doctor (continuity of care), so patient counts are
-  // never scoped. Consultation counts are scoped to "my own" for a doctor, unscoped for admin.
-  const own = req.user.role === 'doctor' ? { createdBy: req.user._id } : {};
+  // A doctor's dashboard shows only their own work: the consultations they recorded, the patients they have
+  // seen, and the patients they registered. Admin / Super Admin see the whole clinic. (The Patients page itself
+  // stays open to every doctor, for emergencies and follow-ups.)
+  const isDoctor = req.user.role === 'doctor';
+  const own = isDoctor ? { createdBy: req.user._id } : {};
+  const ownPatients = isDoctor ? { createdBy: req.user._id } : {};
 
   const [
     totalPatients,
+    patientsSeen,
     newPatientsThisMonth,
     consultationsToday,
     consultationsThisMonth,
     todaysConsultations,
     recentPatients,
   ] = await Promise.all([
-    Patient.countDocuments(),
-    Patient.countDocuments({ createdAt: { $gte: monthStart } }),
+    isDoctor ? Promise.resolve(0) : Patient.countDocuments(),
+    // distinct patients this doctor has had a consultation with (patients that still exist)
+    isDoctor
+      ? Consultation.distinct('patient', own).then((ids) => Patient.countDocuments({ _id: { $in: ids } }))
+      : Promise.resolve(0),
+    Patient.countDocuments({ ...ownPatients, createdAt: { $gte: monthStart } }),
     Consultation.countDocuments({ ...own, consultationDate: { $gte: dayStart, $lt: dayEnd } }),
     Consultation.countDocuments({ ...own, consultationDate: { $gte: monthStart } }),
     Consultation.find({ ...own, consultationDate: { $gte: dayStart, $lt: dayEnd } })
@@ -37,7 +45,7 @@ export const getStats = asyncHandler(async (req, res) => {
       .limit(8)
       .populate('patient', 'patientNo surname firstName dob')
       .lean(),
-    Patient.find().sort({ createdAt: -1 }).limit(5).lean(),
+    Patient.find(ownPatients).sort({ createdAt: -1 }).limit(5).lean(),
   ]);
 
   // Admin-only: how many patients each doctor has seen this month, for the "Team activity"
@@ -60,7 +68,9 @@ export const getStats = asyncHandler(async (req, res) => {
   }
 
   res.json({
+    scope: isDoctor ? 'own' : 'clinic',
     totalPatients,
+    patientsSeen,
     newPatientsThisMonth,
     consultationsToday,
     consultationsThisMonth,

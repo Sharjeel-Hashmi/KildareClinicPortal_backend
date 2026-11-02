@@ -24,6 +24,8 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import auditRoutes from './routes/auditRoutes.js';
 import doctorRoutes from './routes/doctorRoutes.js';
 import clinicSettingsRoutes from './routes/clinicSettingsRoutes.js';
+import expenseRoutes from './routes/expenseRoutes.js';
+import financeRoutes from './routes/financeRoutes.js';
 import publicRoutes from './routes/publicRoutes.js';
 import auditMiddleware from './middleware/audit.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
@@ -101,6 +103,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/clinic-settings', clinicSettingsRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/finance', financeRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

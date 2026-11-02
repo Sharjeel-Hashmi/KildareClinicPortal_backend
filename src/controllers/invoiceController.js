@@ -1,7 +1,10 @@
+import { DateTime } from 'luxon';
 import Invoice, { INVOICE_FIELDS } from '../models/Invoice.js';
 import Patient from '../models/Patient.js';
 import { asyncHandler, pick, escapeRegex, HttpError } from '../utils/asyncHandler.js';
 import { generateReceiptNo } from '../utils/generateReceiptNo.js';
+import { TIMEZONE } from '../config/booking.js';
+import { isValidDateStr } from '../utils/slotMath.js';
 
 const PATIENT_SUMMARY = 'patientNo surname firstName dob sex phone';
 
@@ -86,6 +89,21 @@ export const listAll = asyncHandler(async (req, res) => {
     filter = { ...filter, createdBy: req.query.doctorId };
   }
 
+  // Optional date range (Irish dates, YYYY-MM-DD) - used when opening a doctor's invoices from the Reports tab
+  const { from, to } = req.query;
+  if (from || to) {
+    const range = {};
+    if (from) {
+      if (!isValidDateStr(String(from))) throw new HttpError(400, 'Dates must be in YYYY-MM-DD format');
+      range.$gte = DateTime.fromISO(String(from), { zone: TIMEZONE }).startOf('day').toJSDate();
+    }
+    if (to) {
+      if (!isValidDateStr(String(to))) throw new HttpError(400, 'Dates must be in YYYY-MM-DD format');
+      range.$lt = DateTime.fromISO(String(to), { zone: TIMEZONE }).plus({ days: 1 }).startOf('day').toJSDate();
+    }
+    filter = { ...filter, date: range };
+  }
+
   // Never list an invoice whose patient no longer exists (it would show as a blank row / blank page)
   const existingPatients = await Patient.distinct('_id');
   filter = { $and: [filter, { patient: { $in: existingPatients } }] };
@@ -97,10 +115,15 @@ export const listAll = asyncHandler(async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit)
       .populate('patient', PATIENT_SUMMARY)
+      .populate('createdBy', 'name')
       .lean(),
   ]);
 
-  res.json({ invoices, total, page, pages: Math.max(Math.ceil(total / limit), 1) });
+  // the filtered total, so a doctor's (or a month's) income can be read straight off the list
+  const amounts = await Invoice.find(filter).select('subtotal').lean();
+  const totalAmount = Math.round(amounts.reduce((acc, i) => acc + i.subtotal, 0) * 100) / 100;
+
+  res.json({ invoices, total, totalAmount, page, pages: Math.max(Math.ceil(total / limit), 1) });
 });
 
 export const getInvoice = asyncHandler(async (req, res) => {
