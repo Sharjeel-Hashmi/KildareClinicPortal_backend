@@ -43,9 +43,15 @@ const invoiceSchema = new Schema(
     cardLast4: { type: String, trim: true, maxlength: 4 },
     cardAuthCode: { type: String, trim: true, maxlength: 40 },
 
-    // Snapshot of who took the payment at the time (see Prescription.js doctorName for the same pattern)
+    // Snapshot of the doctor's name at the time (see Prescription.js doctorName for the same pattern)
     takenBy: { type: String, trim: true, maxlength: 150 },
 
+    // The doctor this invoice's income belongs to (used by Reports -> income by doctor).
+    // A doctor raises invoices in their own name; Admin / Super Admin must choose the doctor.
+    // Older invoices have no `doctor`: they count for `createdBy` until a Super Admin edits them.
+    doctor: { type: Schema.Types.ObjectId, ref: 'User', index: true },
+
+    // Who typed the invoice in (for the record; may be an admin entering it for a doctor)
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },
   { timestamps: true }

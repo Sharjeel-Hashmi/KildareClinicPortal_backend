@@ -50,7 +50,8 @@ export const getSummary = asyncHandler(async (req, res) => {
     ]),
     Invoice.aggregate([
       { $match: invoiceMatch(periodStart, periodEnd) },
-      { $group: { _id: '$createdBy', income: { $sum: '$subtotal' }, invoices: { $sum: 1 }, takenBy: { $last: '$takenBy' } } },
+      // the doctor the invoice was raised for; older invoices without one count for whoever created them
+      { $group: { _id: { $ifNull: ['$doctor', '$createdBy'] }, income: { $sum: '$subtotal' }, invoices: { $sum: 1 }, takenBy: { $last: '$takenBy' } } },
       { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
       { $sort: { income: -1 } },
     ]),
@@ -90,6 +91,8 @@ export const getSummary = asyncHandler(async (req, res) => {
       name: d.user?.[0]?.name || d.takenBy || 'Unknown',
       income: money(d.income),
       invoices: d.invoices,
+      // false when the income sits under an Admin / Super Admin account (an old invoice nobody assigned to a doctor)
+      assigned: d.user?.[0]?.role === 'doctor',
       share: incomeTotal > 0 ? Math.round((d.income / incomeTotal) * 1000) / 10 : 0,
     })),
     expenseByCategory: categoryRows.map((c) => ({ name: c._id, amount: money(c.amount), count: c.count })),
